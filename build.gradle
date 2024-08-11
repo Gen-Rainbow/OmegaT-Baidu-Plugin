@@ -1,0 +1,66 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'checkstyle'
+}
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    provided
+}
+
+sourceSets {
+    main {
+        compileClasspath += configurations.provided
+        test.compileClasspath += configurations.provided
+        test.runtimeClasspath += configurations.provided
+    }
+}
+
+dependencies {
+    provided 'org.slf4j:slf4j-nop:2.0.15'
+    provided 'commons-io:commons-io:2.16.1'
+    provided 'commons-lang:commons-lang:2.6'
+    provided 'org.omegat:omegat:6.0.0'
+    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.14'
+    implementation 'com.google.guava:guava:33.2.1-jre'
+    implementation 'org.json:json:20240303'
+}
+
+checkstyle {
+    config = resources.text.fromFile("${rootProject.projectDir}/config/checkstyle/checkstyle.xml")
+    ignoreFailures = true
+    toolVersion = '7.1'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    String someString = ''
+    from {
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+    }
+    configurations.runtimeClasspath.findAll {
+        it.name.endsWith('jar')
+    }.collect { someString += " " + it.name }
+
+    manifest {
+        attributes(
+                "Plugin-Name": "Baidu Translate",
+                "Plugin-Version": "6.0.0",
+                "Plugin-Author": "Gen_Rainbow",
+                "Plugin-Description": "omegat baidu translation plugin",
+                "OmegaT-Plugins": "omegat.baidu.BaiduTranslate",
+                'Class-Path': someString
+        )
+    }
+}
